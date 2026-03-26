@@ -1,0 +1,181 @@
+import { useState } from 'react';
+import { useFunctionalEnrichment, usePathwayActivity } from '../hooks/useAnalysis';
+import { useFullscreen } from '../hooks/useFullscreen';
+import { ActionButtons } from './ui/ActionButtons';
+import { FullscreenModal } from './ui/FullscreenModal';
+import { exportToCSV } from '../utils/exportToCSV';
+import { exportToExcel } from '../utils/exportToExcel';
+
+interface EnrichmentPanelProps {
+  sessionId: string;
+  organism: string;
+  initialGenes?: string; // Pre-filled genes
+}
+
+export function EnrichmentPanel({ sessionId, organism, initialGenes = '' }: EnrichmentPanelProps) {
+  const [genesInput, setGenesInput] = useState(initialGenes);
+  const [database, setDatabase] = useState('GO_Biological_Process');
+  const [enrichmentResults, setEnrichmentResults] = useState<any[]>([]);
+  
+  const { mutate: runEnrichment, isPending: isEnrichmentLoading } = useFunctionalEnrichment(sessionId);
+  const { mutate: runActivity, isPending: isActivityLoading } = usePathwayActivity(sessionId);
+  const [activityMessage, setActivityMessage] = useState('');
+  const { isFullscreen, openFullscreen, closeFullscreen } = useFullscreen();
+
+  const handleEnrichment = () => {
+    const geneList = genesInput.split(/[\n, ]+/).filter(g => g.trim().length > 0);
+    runEnrichment({
+      geneList,
+      database,
+      organism
+    }, {
+      onSuccess: (data) => {
+        setEnrichmentResults(data.results || []);
+      }
+    });
+  };
+
+  const handleActivity = (method: string) => {
+    runActivity({ method, organism }, {
+      onSuccess: (data) => {
+        setActivityMessage(data.message);
+      }
+    });
+  };
+
+  const handleDownloadCSV = () => {
+    if (enrichmentResults.length > 0) {
+      exportToCSV(enrichmentResults, `functional_enrichment_${database}`);
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    if (enrichmentResults.length > 0) {
+      exportToExcel(enrichmentResults, `functional_enrichment_${database}`, 'Enrichment Results');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="text-lg font-bold mb-4">Functional Enrichment</h3>
+        <div className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Database</label>
+                <select 
+                    value={database} 
+                    onChange={(e) => setDatabase(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                    <option value="GO_Biological_Process">GO Biological Process</option>
+                    <option value="KEGG">KEGG</option>
+                    <option value="Reactome">Reactome</option>
+                    <option value="WikiPathways">WikiPathways</option>
+                </select>
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Genes (comma or newline separated)</label>
+                <textarea 
+                    value={genesInput}
+                    onChange={(e) => setGenesInput(e.target.value)}
+                    rows={4}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Gene1, Gene2, ..."
+                />
+            </div>
+            <button
+                onClick={handleEnrichment}
+                disabled={isEnrichmentLoading || !genesInput}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+                {isEnrichmentLoading ? 'Running...' : 'Run Enrichment'}
+            </button>
+        </div>
+        
+        {enrichmentResults.length > 0 && (
+            <div className="mt-4 overflow-x-auto relative">
+                <ActionButtons
+                    onDownloadCSV={handleDownloadCSV}
+                    onDownloadExcel={handleDownloadExcel}
+                    onFullscreen={openFullscreen}
+                    position="top-right"
+                />
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P-value</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Genes</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {enrichmentResults.map((res, i) => (
+                            <tr key={i}>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{res.term_name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{res.pvalue.toExponential(2)}</td>
+                                <td className="px-6 py-4 text-sm text-gray-500">{res.n_genes}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        )}
+      </div>
+
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="text-lg font-bold mb-4">Pathway Activity (Progeny/Collectri)</h3>
+        <div className="flex space-x-4">
+            <button
+                onClick={() => handleActivity('collectri')}
+                disabled={isActivityLoading}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
+            >
+                Run Collectri (TFs)
+            </button>
+            <button
+                onClick={() => handleActivity('progeny')}
+                disabled={isActivityLoading}
+                className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 disabled:opacity-50"
+            >
+                Run Progeny (Pathways)
+            </button>
+        </div>
+        {activityMessage && (
+            <div className="mt-4 p-2 bg-green-50 text-green-700 rounded">
+                {activityMessage}
+            </div>
+        )}
+      </div>
+
+      {/* Fullscreen Modal for Enrichment Results */}
+      <FullscreenModal
+        isOpen={isFullscreen}
+        onClose={closeFullscreen}
+        title="Functional Enrichment Results"
+      >
+        <div className="overflow-x-auto">
+          {enrichmentResults.length > 0 ? (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P-value</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Genes</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {enrichmentResults.map((res, i) => (
+                  <tr key={i}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{res.term_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{res.pvalue.toExponential(2)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{res.n_genes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : null}
+        </div>
+      </FullscreenModal>
+    </div>
+  );
+}
