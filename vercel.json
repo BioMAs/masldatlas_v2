@@ -22,7 +22,9 @@
       ]
     }
   ],
-  "env": {
-    "VITE_API_URL": "https://api.masld.scilicium.com"
+  "build": {
+    "env": {
+      "VITE_API_URL": "https://api.masld.scilicium.com"
+    }
   }
 }

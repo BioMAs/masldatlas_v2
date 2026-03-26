@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Filter, Check } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
+import { apiClient } from '../lib/api';
 
 interface ClusterFilterProps {
   sessionId: string;
@@ -19,20 +20,11 @@ export const ClusterFilter: React.FC<ClusterFilterProps> = ({
   // Mutation pour appliquer le filtre
   const filterMutation = useMutation({
     mutationFn: async (clusters: string[]) => {
-      const response = await fetch(
-        `http://localhost:8000/api/analysis/filter-by-clusters/${sessionId}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(clusters)
-        }
+      const response = await apiClient.post(
+        `/analysis/filter-by-clusters/${sessionId}`,
+        clusters
       );
-      
-      if (!response.ok) {
-        throw new Error('Failed to filter dataset');
-      }
-      
-      return response.json();
+      return response.data;
     },
     onSuccess: (data) => {
       onFilterApplied(data);
