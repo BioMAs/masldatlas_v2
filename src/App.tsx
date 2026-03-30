@@ -10,6 +10,7 @@ import { PseudobulkAnalysis } from './components/PseudobulkAnalysis';
 import { ClusterSelection } from './components/ClusterSelection';
 import { ClusterFilter } from './components/ClusterFilter';
 import { Documentation } from './components/Documentation';
+import { GeneSetEnrichment } from './components/GeneSetEnrichment';
 import { useDatasetInfo } from './hooks/useDataset';
 
 const queryClient = new QueryClient({
@@ -21,7 +22,7 @@ const queryClient = new QueryClient({
   },
 });
 
-type AnalysisTab = 'exploration' | 'dge' | 'pseudobulk' | 'cluster_selection' | 'documentation';
+type AnalysisTab = 'exploration' | 'dge' | 'pseudobulk' | 'cluster_selection' | 'geneset' | 'documentation';
 
 function AppContent() {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -37,6 +38,7 @@ function AppContent() {
     { id: 'cluster_selection', label: 'Cluster Selection' },
     { id: 'dge', label: 'Differential Expression' },
     { id: 'pseudobulk', label: 'Pseudo-bulk' },
+    { id: 'geneset', label: 'Gene Set Enrichment' },
     { id: 'documentation', label: 'Documentation' },
   ];
 
@@ -193,6 +195,10 @@ function AppContent() {
 
                           {activeTab === 'pseudobulk' && (
                             <PseudobulkAnalysis sessionId={sessionId} />
+                          )}
+
+                          {activeTab === 'geneset' && (
+                            <GeneSetEnrichment sessionId={sessionId} />
                           )}
                         </>
                       )

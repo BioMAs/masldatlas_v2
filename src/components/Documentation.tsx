@@ -138,7 +138,7 @@ export function Documentation() {
       title: 'Analysis Workflow',
       content: (
         <div className="space-y-4">
-          <p>The recommended analysis workflow follows four sequential tabs:</p>
+          <p>The recommended analysis workflow follows five sequential tabs:</p>
           <div className="space-y-4">
             <div className="flex gap-3">
               <span className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm flex items-center justify-center">
@@ -175,7 +175,9 @@ export function Documentation() {
                   Run Scanpy-based DGE (Wilcoxon / t-test / LogReg) between any two groups or
                   clusters. Explore results via volcano plot, rank-genes plot, violin plots, and
                   functional enrichment (GO, KEGG, Reactome, WikiPathways) or Decoupler analyses
-                  (CollecTRI TF activities, PROGENy pathway activities, MSigDB Hallmarks).
+                  (CollecTRI TF activities, PROGENy pathway activities, MSigDB collections).
+                  After DGE completes, the panel automatically switches to Functional Enrichment.
+                  You can also pass DEGs directly to the <strong>Custom Gene Sets</strong> tab.
                 </p>
               </div>
             </div>
@@ -192,6 +194,20 @@ export function Documentation() {
                 </p>
               </div>
             </div>
+            <div className="flex gap-3">
+              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm flex items-center justify-center">
+                5
+              </span>
+              <div>
+                <p className="font-semibold">Gene Set Enrichment (standalone)</p>
+                <p className="text-sm text-gray-600">
+                  Bring your own gene list for ULM-based enrichment independently of any DGE run.
+                  Supports single-set and dual-set (up/down) modes. Quickly pre-fill with DGE
+                  up- or down-regulated genes using the <strong>▲ Upregulated / ▼ Downregulated</strong>{' '}
+                  buttons, or paste any custom gene list.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       ),
@@ -203,7 +219,7 @@ export function Documentation() {
       content: (
         <div className="space-y-3">
           <ul className="space-y-3">
-            {[
+              {[
               {
                 name: 'Interactive UMAP',
                 desc: 'Colour by any metadata column or gene expression. Zoom, pan, and hover for cell-level details.',
@@ -226,7 +242,7 @@ export function Documentation() {
               },
               {
                 name: 'DGE + Volcano',
-                desc: 'Interactive Plotly volcano with log2FC/p-value filters and violin slide-in panel per gene.',
+                desc: 'Interactive Plotly volcano with log2FC/p-value filters and violin slide-in panel per gene. Auto-opens Functional Enrichment on completion.',
               },
               {
                 name: 'Functional Enrichment',
@@ -241,8 +257,12 @@ export function Documentation() {
                 desc: 'Decoupler MLM inference of 14 signalling pathway activities with barplot and target-gene dual barplot.',
               },
               {
-                name: 'MSigDB Hallmarks',
-                desc: 'ORA on the 50-gene-set Hallmark collection with dotplot and GSEA running-score curve.',
+                name: 'MSigDB Gene Sets',
+                desc: 'ORA on four MSigDB collections: Hallmark (50 sets), Chemical & Genetic Perturbations (C2 CGP), GO Biological Process (C5 BP), and Oncogenic Signatures (C6). Includes GSEA running-score curves.',
+              },
+              {
+                name: 'Custom Gene Set Enrichment',
+                desc: 'Bring-your-own gene list for ULM enrichment in single or dual (up/down) mode. Quick-fill from DGE up- or down-regulated genes.',
               },
               {
                 name: 'Pseudo-bulk DESeq2',

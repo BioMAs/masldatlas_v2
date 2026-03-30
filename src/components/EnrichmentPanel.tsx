@@ -81,7 +81,7 @@ export function EnrichmentPanel({ sessionId, organism, deseqResults }: Enrichmen
     return enrichmentResults.slice(0, 20).map(r => ({
         term: r.term_name,
         padj: r.pvalue, // or r.adj_pvalue if available
-        count: r.intersection_size || 5, // fallback
+        count: r.n_genes || r.intersection_size || 5, // backend key: n_genes
         generatio: (r.intersection_size || 1) / (genesInput.split(/[\n, ]+/).length || 100), // Approximate ratio
         log2FoldChange: 0
     }));
@@ -90,7 +90,7 @@ export function EnrichmentPanel({ sessionId, organism, deseqResults }: Enrichmen
   const colDefs: ColDef[] = [
     { field: 'term_name', headerName: 'Term', sortable: true, filter: true, flex: 2 },
     { field: 'pvalue', headerName: 'P-value', sortable: true, filter: 'agNumberColumnFilter', flex: 1, valueFormatter: (p: any) => p.value?.toExponential(2) },
-    { field: 'intersection_size', headerName: 'Count', sortable: true, filter: 'agNumberColumnFilter', flex: 1 },
+    { field: 'n_genes', headerName: 'Count', sortable: true, filter: 'agNumberColumnFilter', flex: 1 },
     { field: 'genes', headerName: 'Genes', sortable: false, flex: 2 }
   ];
 

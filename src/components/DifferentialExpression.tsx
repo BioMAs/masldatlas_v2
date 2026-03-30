@@ -10,6 +10,7 @@ import { ActionButtons } from './ui/ActionButtons';
 import { FullscreenModal } from './ui/FullscreenModal';
 import { EnrichmentPanel } from './EnrichmentPanel';
 import { DecouplerPanel } from './DecouplerPanel';
+import { GeneSetEnrichment } from './GeneSetEnrichment';
 import { VolcanoPlot } from './plots/VolcanoPlot';
 import { RankGenesPlot } from './plots/RankGenesPlot';
 import { exportToCSV } from '../utils/exportToCSV';
@@ -31,7 +32,7 @@ interface DifferentialExpressionProps {
 type MainTab = 'deg';
 type GroupByMode = 'clusters' | 'groups';
 type DataScope = 'all' | 'filtered';
-type BottomPanel = 'enrichment' | 'decoupler';
+type BottomPanel = 'enrichment' | 'decoupler' | 'custom_geneset';
 
 export function DifferentialExpression({ sessionId, filteredSessionId, cellTypes }: DifferentialExpressionProps) {
   const { data: datasetInfo } = useDatasetInfo(sessionId);
@@ -69,6 +70,11 @@ export function DifferentialExpression({ sessionId, filteredSessionId, cellTypes
     setSelectedGene(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSessionId]);
+
+  // Auto-switch to enrichment bottom panel once DGE has run
+  useEffect(() => {
+    if (isSuccess) setBottomPanel('enrichment');
+  }, [isSuccess]);
 
   // Violin-gene query (lazy — only fetches when selectedGene is set)
   const { data: violinData, isFetching: loadingViolin } = useQuery({
@@ -405,7 +411,14 @@ export function DifferentialExpression({ sessionId, filteredSessionId, cellTypes
                     {/* Table — click row to open violin panel */}
                     <div className="bg-white rounded-lg shadow-sm border flex flex-col h-[500px]">
                       <div className="flex items-center justify-between p-3 border-b bg-gray-50">
-                        <h4 className="font-semibold text-sm">Significant Genes ({filteredResults.length})</h4>
+                        <h4 className="font-semibold text-sm">
+                          Significant Genes ({filteredResults.length})
+                          {filteredResults.length === 0 && mappedResults.length > 0 && (
+                            <span className="ml-2 text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                              No genes pass current filters — try relaxing Log2FC / P-value thresholds
+                            </span>
+                          )}
+                        </h4>
                         {selectedGene && (
                           <span className="text-xs text-indigo-600 flex items-center gap-1">
                             <ChevronRight className="w-3 h-3" />
@@ -439,6 +452,7 @@ export function DifferentialExpression({ sessionId, filteredSessionId, cellTypes
                             {([
                               { id: 'enrichment', label: '🔬 Functional Enrichment' },
                               { id: 'decoupler', label: '🔗 Decoupler (TF / Pathway / MSigDB)' },
+                              { id: 'custom_geneset', label: '🧬 Custom Gene Sets' },
                             ] as const).map(({ id, label }) => (
                               <button
                                 key={id}
@@ -467,6 +481,14 @@ export function DifferentialExpression({ sessionId, filteredSessionId, cellTypes
                               organism={organism}
                               deseqResults={filteredResults}
                             />
+                          )}
+                          {bottomPanel === 'custom_geneset' && (
+                            <div className="p-4">
+                              <GeneSetEnrichment
+                                sessionId={activeSessionId}
+                                deseqResults={filteredResults}
+                              />
+                            </div>
                           )}
                         </div>
                       </div>

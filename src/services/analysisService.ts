@@ -146,10 +146,11 @@ export const analysisService = {
   /**
    * Run MSigDB ORA Analysis (Decoupler)
    */
-  async runMsigdb(deseqResults: any[], organism: string): Promise<any> {
+  async runMsigdb(deseqResults: any[], organism: string, collection: string = 'hallmark'): Promise<any> {
     const response = await apiClient.post('/decoupler/msigdb', {
       deseq_results: deseqResults,
       organism,
+      collection,
     });
     return response.data;
   },

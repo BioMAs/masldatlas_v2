@@ -29,6 +29,14 @@ export const DecouplerPanel: React.FC<DecouplerPanelProps> = ({
   const [collectriView, setCollectriView] = useState<CollectriView>('barplot');
   const [selectedPathway, setSelectedPathway] = useState<string | null>(null);
   const [_progenyView, setProgenyView] = useState<ProgenyView>('barplot');
+  const [msigdbCollection, setMsigdbCollection] = useState<string>('hallmark');
+
+  const MSIGDB_COLLECTIONS: { value: string; label: string }[] = [
+    { value: 'hallmark',  label: 'Hallmark (H — 50 sets)' },
+    { value: 'c2.cgp',   label: 'Curated — Chemical & Genetic (C2 CGP)' },
+    { value: 'c5.go.bp', label: 'GO Biological Process (C5 BP)' },
+    { value: 'c6',        label: 'Oncogenic Signatures (C6)' },
+  ];
 
   // CollecTRI Analysis
   const collectriMutation = useMutation({
@@ -42,7 +50,7 @@ export const DecouplerPanel: React.FC<DecouplerPanelProps> = ({
 
   // MSigDB ORA Analysis
   const msigdbMutation = useMutation({
-    mutationFn: () => analysisService.runMsigdb(deseqResults, organism)
+    mutationFn: () => analysisService.runMsigdb(deseqResults, organism, msigdbCollection)
   });
 
   // MSigDB Running Score
@@ -162,19 +170,40 @@ export const DecouplerPanel: React.FC<DecouplerPanelProps> = ({
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          Gene Sets (MSigDB Hallmarks)
+          Gene Sets (MSigDB)
         </button>
       </div>
 
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
            <p className="text-sm text-gray-600">
              {activeTab === 'collectri' 
                 ? "Infer transcription factor activities from the expression of their target genes." 
                 : activeTab === 'progeny'
                   ? "Infer pathway activities based on the expression of footprint genes."
-                  : "Over-Representation Analysis on MSigDB Hallmark gene sets."}
+                  : "Over-Representation Analysis on MSigDB gene sets."}
            </p>
+
+           {activeTab === 'msigdb' && (
+             <div className="flex items-center gap-2 shrink-0">
+               <label htmlFor="msigdb-collection" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                 Collection
+               </label>
+               <select
+                 id="msigdb-collection"
+                 value={msigdbCollection}
+                 onChange={(e) => {
+                   setMsigdbCollection(e.target.value);
+                   msigdbMutation.reset();
+                 }}
+                 className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+               >
+                 {MSIGDB_COLLECTIONS.map((c) => (
+                   <option key={c.value} value={c.value}>{c.label}</option>
+                 ))}
+               </select>
+             </div>
+           )}
            
            <ActionButtons 
                 onDownloadCSV={() => currentData && exportToCSV(currentData, `${activeTab}_results`)}
@@ -408,7 +437,14 @@ export const DecouplerPanel: React.FC<DecouplerPanelProps> = ({
 
               {/* Table */}
               <div className="h-[500px] border rounded-lg shadow-sm bg-gray-50 overflow-hidden flex flex-col">
-                <h4 className="font-semibold p-3 border-b bg-white">Enrichment Results ({msigdbMutation.data.n_gene_sets} sets)</h4>
+                <h4 className="font-semibold p-3 border-b bg-white">
+                  Enrichment Results ({msigdbMutation.data.n_gene_sets} sets)
+                  {msigdbCollection !== 'hallmark' && (
+                    <span className="ml-2 text-xs font-normal text-gray-500 uppercase">
+                      {MSIGDB_COLLECTIONS.find(c => c.value === msigdbCollection)?.label}
+                    </span>
+                  )}
+                </h4>
                 <div className="flex-1 ag-theme-alpine">
                   <AgGridReact
                     theme="legacy"

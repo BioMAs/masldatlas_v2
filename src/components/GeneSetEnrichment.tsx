@@ -1,18 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Sparkles, Plus, X, Download } from 'lucide-react';
+import { Sparkles, Plus, X, Download, Wand2 } from 'lucide-react';
 import { RefreshCw } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { downloadImageAsPNG } from '../utils/downloadImage';
 
 interface GeneSetEnrichmentProps {
   sessionId: string;
+  /** Optional DGE results — enables auto-fill of upregulated genes */
+  deseqResults?: any[];
 }
 
-export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId }) => {
+export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId, deseqResults }) => {
   const [genesetName, setGenesetName] = useState('CustomGeneSet');
   const [geneInput, setGeneInput] = useState('');
   const [genes, setGenes] = useState<string[]>([]);
+
+  // Auto-fill upregulated genes when DGE results first arrive
+  const prevLenRef = useRef(0);
+  useEffect(() => {
+    if (!deseqResults || deseqResults.length === 0) return;
+    if (deseqResults.length === prevLenRef.current) return;
+    prevLenRef.current = deseqResults.length;
+    if (genes.length > 0) return; // don't overwrite user's input
+    const upGenes = deseqResults
+      .filter((r: any) => {
+        const p = r.padj ?? r.pvalue ?? 1;
+        return r.log2FoldChange > 0.5 && p < 0.05;
+      })
+      .map((r: any) => r.gene)
+      .filter(Boolean) as string[];
+    if (upGenes.length > 0) setGenes(upGenes);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deseqResults]);
+
+  const handleUseDEGs = (direction: 'up' | 'down') => {
+    if (!deseqResults) return;
+    const filtered = deseqResults
+      .filter((r: any) => {
+        const p = r.padj ?? r.pvalue ?? 1;
+        return (direction === 'up' ? r.log2FoldChange > 0.5 : r.log2FoldChange < -0.5) && p < 0.05;
+      })
+      .map((r: any) => r.gene)
+      .filter(Boolean) as string[];
+    setGenes(filtered);
+    setGenesetName(direction === 'up' ? 'Upregulated_DEGs' : 'Downregulated_DEGs');
+  };
   
   // Dual mode state
   const [isDualMode, setIsDualMode] = useState(false);
@@ -82,16 +115,38 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId 
             Custom Gene Set Enrichment
           </h2>
         </div>
-        
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isDualMode}
-            onChange={(e) => setIsDualMode(e.target.checked)}
-            className="w-4 h-4 text-purple-600 rounded"
-          />
-          <span className="text-sm font-medium text-gray-700">Mode Comparaison (2 genesets)</span>
-        </label>
+
+        <div className="flex items-center gap-3">
+          {/* Quick-fill buttons when DGE results are available */}
+          {deseqResults && deseqResults.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Wand2 className="w-4 h-4 text-indigo-500" />
+              <span className="text-xs text-gray-500">From DGE:</span>
+              <button
+                onClick={() => handleUseDEGs('up')}
+                className="text-xs px-2 py-1 bg-red-50 text-red-700 border border-red-200 rounded hover:bg-red-100 transition-colors"
+              >
+                ▲ Upregulated
+              </button>
+              <button
+                onClick={() => handleUseDEGs('down')}
+                className="text-xs px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+              >
+                ▼ Downregulated
+              </button>
+            </div>
+          )}
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isDualMode}
+              onChange={(e) => setIsDualMode(e.target.checked)}
+              className="w-4 h-4 text-purple-600 rounded"
+            />
+            <span className="text-sm font-medium text-gray-700">Mode Comparaison (2 genesets)</span>
+          </label>
+        </div>
       </div>
 
       <p className="text-sm text-gray-600 mb-6">
