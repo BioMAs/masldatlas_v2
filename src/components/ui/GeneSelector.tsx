@@ -11,10 +11,17 @@ interface GeneSelectorProps {
 
 export function GeneSelector({ allGenes, selectedGenes, onChange, placeholder = "Search for a gene...", singleSelect = false }: GeneSelectorProps) {
   const [inputValue, setInputValue] = useState('');
+  const [debouncedInput, setDebouncedInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [bulkInput, setBulkInput] = useState('');
   const [showBulkInput, setShowBulkInput] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Debounce gene search: 300 ms
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedInput(inputValue), 300);
+    return () => clearTimeout(timer);
+  }, [inputValue]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -30,13 +37,13 @@ export function GeneSelector({ allGenes, selectedGenes, onChange, placeholder = 
   }, []);
 
   const suggestions = useMemo(() => {
-    if (!inputValue || inputValue.length < 2) return [];
-    const lowerInput = inputValue.toLowerCase();
+    if (!debouncedInput || debouncedInput.length < 2) return [];
+    const lowerInput = debouncedInput.toLowerCase();
     // Return top 20 matches
     return allGenes
       .filter(gene => gene.toLowerCase().includes(lowerInput) && !selectedGenes.includes(gene))
       .slice(0, 20);
-  }, [inputValue, allGenes, selectedGenes]);
+  }, [debouncedInput, allGenes, selectedGenes]);
 
   const addGene = (gene: string) => {
     if (singleSelect) {

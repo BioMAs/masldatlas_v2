@@ -2,7 +2,7 @@
  * API service for visualization operations
  */
 import { apiClient } from '../lib/api';
-import type { VisualizationResponse } from '../types/api';
+import type { VisualizationResponse, UMAPDataResponse, ViolinDataResponse, DotPlotDataResponse } from '../types/api';
 
 export const visualizationService = {
   /**
@@ -108,6 +108,62 @@ export const visualizationService = {
       logfc_threshold: logfcThreshold,
       pval_threshold: pvalThreshold,
     });
+    return response.data;
+  },
+
+  /**
+   * Get UMAP data for client-side rendering
+   */
+  async getUMAPData(
+    sessionId: string,
+    colorBy: string = 'CellType',
+    filterColumn?: string,
+    filterValues?: string[]
+  ): Promise<UMAPDataResponse> {
+    const params: any = { color_by: colorBy };
+    if (filterColumn && filterValues && filterValues.length > 0) {
+      params.filter_column = filterColumn;
+      params.filter_values = filterValues;
+    }
+    const response = await apiClient.get(`/visualization/umap-data/${sessionId}`, { params });
+    return response.data;
+  },
+
+  /**
+   * Get violin data for client-side rendering
+   */
+  async getViolinData(
+    sessionId: string,
+    genes: string[],
+    groupby: string = 'CellType',
+    filterColumn?: string,
+    filterValues?: string[]
+  ): Promise<ViolinDataResponse> {
+    const params: any = { genes: genes.join(','), groupby };
+    if (filterColumn && filterValues && filterValues.length > 0) {
+      params.filter_column = filterColumn;
+      params.filter_values = filterValues;
+    }
+    const response = await apiClient.get(`/visualization/violin-data/${sessionId}`, { params });
+    return response.data;
+  },
+
+  /**
+   * Get dot plot data for client-side rendering
+   */
+  async getDotPlotData(
+    sessionId: string,
+    genes: string[],
+    groupby: string = 'CellType',
+    filterColumn?: string,
+    filterValues?: string[]
+  ): Promise<DotPlotDataResponse> {
+    const params: any = { genes: genes.join(','), groupby };
+    if (filterColumn && filterValues && filterValues.length > 0) {
+      params.filter_column = filterColumn;
+      params.filter_values = filterValues;
+    }
+    const response = await apiClient.get(`/visualization/dotplot-data/${sessionId}`, { params });
     return response.data;
   },
 };

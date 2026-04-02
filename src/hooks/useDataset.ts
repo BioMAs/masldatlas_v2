@@ -3,6 +3,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { datasetService } from '../services/datasetService';
+import { visualizationService } from '../services/visualizationService';
 import type { DatasetLoadRequest } from '../types/api';
 
 export const useOrganisms = () => {
@@ -65,13 +66,10 @@ export const useUMAPVisualization = (
   filterValues?: string[]
 ) => {
   return useQuery({
-    queryKey: ['umap-visualization', sessionId, colorBy, filterColumn, filterValues],
-    queryFn: async () => {
-      const { visualizationService } = await import('../services/visualizationService');
-      return visualizationService.generateUMAP(sessionId!, colorBy, filterColumn, filterValues);
-    },
+    queryKey: ['umap-data', sessionId, colorBy, filterColumn, filterValues],
+    queryFn: () => visualizationService.getUMAPData(sessionId!, colorBy, filterColumn, filterValues),
     enabled: !!sessionId,
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    staleTime: 10 * 60 * 1000,
   });
 };
 
@@ -84,10 +82,22 @@ export const useViolinVisualization = (
 ) => {
   return useQuery({
     queryKey: ['violin-visualization', sessionId, genes, groupby, filterColumn, filterValues],
-    queryFn: async () => {
-      const { visualizationService } = await import('../services/visualizationService');
-      return visualizationService.generateViolin(sessionId!, genes, groupby, filterColumn, filterValues);
-    },
+    queryFn: () => visualizationService.generateViolin(sessionId!, genes, groupby, filterColumn, filterValues),
+    enabled: !!sessionId && genes.length > 0,
+    staleTime: 10 * 60 * 1000,
+  });
+};
+
+export const useViolinData = (
+  sessionId: string | null,
+  genes: string[],
+  groupby: string = 'CellType',
+  filterColumn?: string,
+  filterValues?: string[]
+) => {
+  return useQuery({
+    queryKey: ['violin-data', sessionId, genes, groupby, filterColumn, filterValues],
+    queryFn: () => visualizationService.getViolinData(sessionId!, genes, groupby, filterColumn, filterValues),
     enabled: !!sessionId && genes.length > 0,
     staleTime: 10 * 60 * 1000,
   });
@@ -95,11 +105,8 @@ export const useViolinVisualization = (
 
 export const useDotPlotVisualization = (sessionId: string | null, genes: string[], groupby: string = 'CellType') => {
   return useQuery({
-    queryKey: ['dotplot-visualization', sessionId, genes, groupby],
-    queryFn: async () => {
-      const { visualizationService } = await import('../services/visualizationService');
-      return visualizationService.generateDotPlot(sessionId!, genes, groupby);
-    },
+    queryKey: ['dotplot-data', sessionId, genes, groupby],
+    queryFn: () => visualizationService.getDotPlotData(sessionId!, genes, groupby),
     enabled: !!sessionId && genes.length > 0,
     staleTime: 10 * 60 * 1000,
   });

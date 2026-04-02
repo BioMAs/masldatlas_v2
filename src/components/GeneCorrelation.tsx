@@ -5,9 +5,16 @@ import { useState, useEffect } from 'react';
 import { useGeneCorrelation, useTopCorrelatedGenes } from '../hooks/useAnalysis';
 import { useUMAPVisualization } from '../hooks/useDataset';
 import { GeneSelector } from './ui/GeneSelector';
-import { Maximize2, RefreshCw, GitMerge } from 'lucide-react';
-import { FullscreenModal } from './ui/FullscreenModal';
+import { RefreshCw, GitMerge } from 'lucide-react';
 import Plot from 'react-plotly.js';
+import type { UMAPDataResponse } from '../types/api';
+
+const CATEGORY_COLORS = [
+  '#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd',
+  '#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf',
+  '#aec7e8','#ffbb78','#98df8a','#ff9896','#c5b0d5',
+  '#c49c94','#f7b6d2','#c7c7c7','#dbdb8d','#9edae5',
+];
 
 interface GeneCorrelationProps {
   sessionId: string;
@@ -19,8 +26,6 @@ export function GeneCorrelation({ sessionId, availableGenes = [] }: GeneCorrelat
   const [gene2, setGene2] = useState('');
   const [method, setMethod] = useState<'spearman' | 'pearson'>('spearman');
   const [removeZeros, setRemoveZeros] = useState(false);
-  const [modalImage, setModalImage] = useState<string | null>(null);
-
   const { mutate: calculateCorrelation, data: corrData, isPending } = useGeneCorrelation(sessionId);
   const { mutate: fetchTop1, data: top1Data, isPending: loadingTop1 } = useTopCorrelatedGenes();
   const { mutate: fetchTop2, data: top2Data, isPending: loadingTop2 } = useTopCorrelatedGenes();
@@ -133,15 +138,13 @@ export function GeneCorrelation({ sessionId, availableGenes = [] }: GeneCorrelat
           <UMAPCard
             title={gene1 ? `${gene1} Expression` : 'Select Gene 1'}
             isLoading={loadingUmap1}
-            image={gene1 ? umapGene1?.image : undefined}
-            onZoom={() => umapGene1?.image && setModalImage(umapGene1.image)}
+            umapData={gene1 ? umapGene1 : undefined}
             emptyText={!gene1 ? 'Select Gene 1 above' : 'No data'}
           />
           <UMAPCard
             title={gene2 ? `${gene2} Expression` : 'Select Gene 2'}
             isLoading={loadingUmap2}
-            image={gene2 ? umapGene2?.image : undefined}
-            onZoom={() => umapGene2?.image && setModalImage(umapGene2.image)}
+            umapData={gene2 ? umapGene2 : undefined}
             emptyText={!gene2 ? 'Select Gene 2 above' : 'No data'}
           />
         </div>
@@ -229,10 +232,6 @@ export function GeneCorrelation({ sessionId, availableGenes = [] }: GeneCorrelat
           </div>
         </>
       )}
-
-      <FullscreenModal isOpen={!!modalImage} onClose={() => setModalImage(null)} title="UMAP Zoom">
-        {modalImage && <img src={modalImage} className="max-w-full max-h-screen mx-auto" alt="UMAP zoom" />}
-      </FullscreenModal>
     </div>
   );
 }
@@ -240,27 +239,55 @@ export function GeneCorrelation({ sessionId, availableGenes = [] }: GeneCorrelat
 /* ── Sub-components ─────────────────────────────────────────────────────────── */
 
 function UMAPCard({
-  title, isLoading, image, onZoom, emptyText,
+  title, isLoading, umapData, emptyText,
 }: {
-  title: string; isLoading: boolean; image?: string; onZoom: () => void; emptyText?: string;
+  title: string; isLoading: boolean; umapData?: UMAPDataResponse; emptyText?: string;
 }) {
+  let plotData: Plotly.Data[] | null = null;
+  if (umapData) {
+    const { x, y, categories, unique_categories, is_continuous, color_by } = umapData;
+    if (is_continuous) {
+      plotData = [{
+        type: 'scattergl', mode: 'markers', x, y,
+        marker: { size: 3, color: categories as number[], colorscale: 'Viridis', showscale: true, colorbar: { title: { text: color_by }, thickness: 10, len: 0.7 }, opacity: 0.8 },
+        hovertemplate: `${color_by}: %{marker.color:.3f}<extra></extra>`,
+        showlegend: false,
+      } as any];
+    } else {
+      plotData = (unique_categories ?? []).map((cat: string, idx: number) => {
+        const mask = (categories as string[]).map((c) => c === cat);
+        return {
+          type: 'scattergl', mode: 'markers', name: cat,
+          x: x.filter((_, i) => mask[i]),
+          y: y.filter((_, i) => mask[i]),
+          marker: { size: 3, color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length], opacity: 0.75 },
+          hovertemplate: `${color_by}: ${cat}<extra></extra>`,
+        } as any;
+      });
+    }
+  }
   return (
     <div className="bg-white rounded-xl shadow-sm border p-4 min-h-[300px] flex flex-col">
-      <div className="flex justify-between items-center mb-2">
-        <h4 className="text-sm font-semibold text-gray-700">{title}</h4>
-        {image && (
-          <button onClick={onZoom} className="text-gray-400 hover:text-indigo-600 transition-colors">
-            <Maximize2 className="w-4 h-4" />
-          </button>
-        )}
-      </div>
+      <h4 className="text-sm font-semibold text-gray-700 mb-2">{title}</h4>
       <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-100 overflow-hidden">
         {isLoading ? (
           <RefreshCw className="animate-spin text-indigo-400 w-7 h-7" />
-        ) : image ? (
-          <img src={image} alt={title} className="w-full h-full object-contain max-h-[350px]" />
+        ) : plotData ? (
+          <Plot
+            data={plotData}
+            layout={{
+              xaxis: { title: { text: 'UMAP 1' }, showgrid: false, zeroline: false, showticklabels: false },
+              yaxis: { title: { text: 'UMAP 2' }, showgrid: false, zeroline: false, showticklabels: false },
+              hovermode: 'closest', margin: { t: 10, b: 30, l: 30, r: 10 },
+              legend: { itemsizing: 'constant', font: { size: 10 } },
+              plot_bgcolor: '#f9fafb', paper_bgcolor: '#ffffff',
+            }}
+            config={{ responsive: true, displayModeBar: false }}
+            style={{ width: '100%', height: '280px' }}
+            useResizeHandler
+          />
         ) : (
-          <span className="text-sm text-gray-400">{emptyText || 'No image'}</span>
+          <span className="text-sm text-gray-400">{emptyText || 'No data'}</span>
         )}
       </div>
     </div>

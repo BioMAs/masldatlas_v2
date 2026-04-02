@@ -3,6 +3,7 @@
  */
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import Plot from 'react-plotly.js';
 import { useDifferentialExpression } from '../hooks/useAnalysis';
 import { useDatasetInfo } from '../hooks/useDataset';
 import { useFullscreen } from '../hooks/useFullscreen';
@@ -17,8 +18,7 @@ import { exportToCSV } from '../utils/exportToCSV';
 import { exportToExcel } from '../utils/exportToExcel';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
-import { Settings, X, RefreshCw, ChevronRight, Download } from 'lucide-react';
-import { downloadImageAsPNG } from '../utils/downloadImage';
+import { Settings, X, RefreshCw, ChevronRight } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -61,12 +61,11 @@ export function DifferentialExpression({ sessionId, filteredSessionId, cellTypes
   const [selectedGene, setSelectedGene] = useState<string | null>(null);
 
   // Data Query — keyed on activeSessionId
-  const { mutate: runDGE, data: dgeData, isPending, isSuccess, reset: resetDGE } = useDifferentialExpression(activeSessionId);
+  const { mutate: runDGE, data: dgeData, isPending, isSuccess } = useDifferentialExpression(activeSessionId);
   const { isFullscreen, openFullscreen, closeFullscreen } = useFullscreen();
 
-  // Reset DGE results when scope switches
+  // Reset selected gene when scope switches (keep DEG results)
   useEffect(() => {
-    resetDGE();
     setSelectedGene(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSessionId]);
@@ -76,16 +75,17 @@ export function DifferentialExpression({ sessionId, filteredSessionId, cellTypes
     if (isSuccess) setBottomPanel('enrichment');
   }, [isSuccess]);
 
-  // Violin-gene query (lazy — only fetches when selectedGene is set)
+  // Violin-gene query (lazy — only fetches when selectedGene is set, using JSON data endpoint)
   const { data: violinData, isFetching: loadingViolin } = useQuery({
-    queryKey: ['violin-gene', activeSessionId, selectedGene],
+    queryKey: ['violin-data-dge', activeSessionId, selectedGene, groupByMode === 'clusters' ? 'CellType' : groupByColumn],
     queryFn: () =>
       apiClient
-        .get(`/visualization/violin-gene/${activeSessionId}/${selectedGene}`, {
-          params: { groupby: groupByMode === 'clusters' ? 'CellType' : groupByColumn },
+        .get(`/visualization/violin-data/${activeSessionId}`, {
+          params: { genes: selectedGene, groupby: groupByMode === 'clusters' ? 'CellType' : groupByColumn },
         })
         .then((r) => r.data),
     enabled: !!selectedGene && isSuccess,
+    staleTime: 10 * 60 * 1000,
   });
 
   // Filtered metadata columns (no QC/numeric junk)
@@ -515,15 +515,6 @@ export function DifferentialExpression({ sessionId, filteredSessionId, cellTypes
                 <p className="text-xs text-gray-400">Violin Plot</p>
               </div>
               <div className="flex items-center gap-1">
-                {violinData?.image && (
-                  <button
-                    onClick={() => downloadImageAsPNG(violinData.image, `violin_${selectedGene}`)}
-                    title="Download PNG"
-                    className="text-gray-400 hover:text-indigo-600 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
-                )}
                 <button onClick={() => setSelectedGene(null)} className="text-gray-400 hover:text-gray-700">
                   <X className="w-4 h-4" />
                 </button>
@@ -533,11 +524,29 @@ export function DifferentialExpression({ sessionId, filteredSessionId, cellTypes
             <div className="flex-1 flex items-center justify-center p-2 overflow-auto">
               {loadingViolin ? (
                 <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
-              ) : violinData?.image ? (
-                <img
-                  src={violinData.image}
-                  alt={`Violin ${selectedGene}`}
-                  className="w-full h-auto rounded"
+              ) : violinData?.data && violinData.groups ? (
+                <Plot
+                  data={violinData.groups.map((group: string) => ({
+                    type: 'violin',
+                    name: group,
+                    y: violinData.data[selectedGene]?.[group] ?? [],
+                    box: { visible: true },
+                    meanline: { visible: true },
+                    points: false,
+                    opacity: 0.8,
+                  }))}
+                  layout={{
+                    yaxis: { title: { text: 'Expression' }, zeroline: false },
+                    xaxis: { tickangle: -45 },
+                    margin: { t: 10, b: 80, l: 50, r: 10 },
+                    showlegend: false,
+                    height: 320,
+                    plot_bgcolor: '#f9fafb',
+                    paper_bgcolor: '#ffffff',
+                  }}
+                  config={{ responsive: true, displayModeBar: false }}
+                  style={{ width: '100%' }}
+                  useResizeHandler
                 />
               ) : (
                 <p className="text-xs text-gray-400 text-center">No violin data</p>

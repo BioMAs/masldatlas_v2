@@ -100,6 +100,33 @@ export interface DGEResponse {
   results: DGEResult[];
 }
 
+// Client-side visualization data types
+export interface UMAPDataResponse {
+  success: boolean;
+  x: number[];
+  y: number[];
+  categories: (string | number)[];
+  unique_categories: string[];
+  color_by: string;
+  is_continuous: boolean;
+  n_cells: number;
+}
+
+export interface ViolinDataResponse {
+  success: boolean;
+  genes: string[];
+  groups: string[];
+  data: Record<string, Record<string, number[]>>;
+}
+
+export interface DotPlotDataResponse {
+  success: boolean;
+  genes: string[];
+  groups: string[];
+  mean_expression: Record<string, Record<string, number>>;
+  fraction_expressing: Record<string, Record<string, number>>;
+}
+
 export interface SubsetStats {
   n_cells: number;
   n_genes: number;
