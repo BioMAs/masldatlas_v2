@@ -144,13 +144,13 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
               onChange={(e) => setIsDualMode(e.target.checked)}
               className="w-4 h-4 text-purple-600 rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Mode Comparaison (2 genesets)</span>
+            <span className="text-sm font-medium text-gray-700">Comparison Mode (2 gene sets)</span>
           </label>
         </div>
       </div>
 
       <p className="text-sm text-gray-600 mb-6">
-        Analysez l'enrichissement de vos propres signatures génétiques sur les données scRNA-seq
+        Analyze the enrichment of your own gene signatures on scRNA-seq data
       </p>
 
       <div className={`grid ${isDualMode ? 'grid-cols-2' : 'grid-cols-1'} gap-6`}>
@@ -158,7 +158,7 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nom du Gene Set {isDualMode ? '1' : ''}
+              Gene Set Name {isDualMode ? '1' : ''}
             </label>
             <input
               type="text"
@@ -171,7 +171,7 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Gènes (un par ligne, séparés par virgule ou espace)
+              Genes (one per line, comma or space separated)
             </label>
             <textarea
               value={geneInput}
@@ -188,14 +188,14 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
               className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Ajouter les gènes
+              Add genes
             </button>
           </div>
 
           {genes.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-gray-700 mb-2">
-                Gènes ajoutés ({genes.length})
+                Added genes ({genes.length})
               </h4>
               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded">
                 {genes.map(gene => (
@@ -222,7 +222,7 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
           <div className="border border-gray-200 rounded-lg p-4">
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nom du Gene Set 2
+                Gene Set Name 2
               </label>
               <input
                 type="text"
@@ -235,7 +235,7 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Gènes
+                Genes
               </label>
               <textarea
                 value={geneInput2}
@@ -252,14 +252,14 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
                 className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                Ajouter les gènes
+                Add genes
               </button>
             </div>
 
             {genes2.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Gènes ajoutés ({genes2.length})
+                  Added genes ({genes2.length})
                 </h4>
                 <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded">
                   {genes2.map(gene => (
@@ -309,20 +309,20 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
         <div className="mt-8 space-y-6">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <p className="text-green-800 font-medium">
-              ✅ Analyse terminée !
+              ✅ Analysis complete!
               {isDualMode ? (
                 <>
                   <br />
-                  Comparaison: <strong>{results.geneset1_name}</strong> vs <strong>{results.geneset2_name}</strong>
+                  Comparison: <strong>{results.geneset1_name}</strong> vs <strong>{results.geneset2_name}</strong>
                   <br />
-                  {results.n_cells} cellules analysées
+                  {results.n_cells} cells analyzed
                 </>
               ) : (
                 <>
                   <br />
                   Gene Set: <strong>{results.geneset_name}</strong>
                   <br />
-                  {results.n_cells} cellules analysées
+                  {results.n_cells} cells analyzed
                 </>
               )}
             </p>
@@ -332,13 +332,13 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
           {!isDualMode && results.umap_image && (
             <div className="border border-gray-200 rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-lg">UMAP - Score d'Enrichissement</h3>
+                <h3 className="font-semibold text-lg">UMAP - Enrichment Score</h3>
                 <button
                   onClick={() => downloadImageAsPNG(results.umap_image, `${genesetName}_umap`)}
                   className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                 >
                   <Download className="w-4 h-4" />
-                  Télécharger
+                  Download
                 </button>
               </div>
               <img src={results.umap_image} alt="UMAP" className="w-full h-auto rounded" />
@@ -349,13 +349,13 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
           {isDualMode && results.dual_umap_image && (
             <div className="border border-gray-200 rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-lg">UMAP - Comparaison des Scores</h3>
+                <h3 className="font-semibold text-lg">UMAP - Score Comparison</h3>
                 <button
                   onClick={() => downloadImageAsPNG(results.dual_umap_image, 'dual_geneset_umap')}
                   className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                 >
                   <Download className="w-4 h-4" />
-                  Télécharger
+                  Download
                 </button>
               </div>
               <img src={results.dual_umap_image} alt="Dual UMAP" className="w-full h-auto rounded" />
@@ -366,13 +366,13 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
           {!isDualMode && results.violin_image && (
             <div className="border border-gray-200 rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-lg">Distribution par Type Cellulaire</h3>
+                <h3 className="font-semibold text-lg">Distribution by Cell Type</h3>
                 <button
                   onClick={() => downloadImageAsPNG(results.violin_image, `${genesetName}_violin`)}
                   className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                 >
                   <Download className="w-4 h-4" />
-                  Télécharger
+                  Download
                 </button>
               </div>
               <img src={results.violin_image} alt="Violin Plot" className="w-full h-auto rounded" />
@@ -383,13 +383,13 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
           {isDualMode && results.dual_violin_image && (
             <div className="border border-gray-200 rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-lg">Distribution par Type Cellulaire - Comparaison</h3>
+                <h3 className="font-semibold text-lg">Distribution by Cell Type - Comparison</h3>
                 <button
                   onClick={() => downloadImageAsPNG(results.dual_violin_image, 'dual_geneset_violin')}
                   className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                 >
                   <Download className="w-4 h-4" />
-                  Télécharger
+                  Download
                 </button>
               </div>
               <img src={results.dual_violin_image} alt="Dual Violin" className="w-full h-auto rounded" />
@@ -402,7 +402,7 @@ export const GeneSetEnrichment: React.FC<GeneSetEnrichmentProps> = ({ sessionId,
       {(singleMutation.isError || dualMutation.isError) && (
         <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-800">
-            ❌ Erreur: {(singleMutation.error as Error)?.message || (dualMutation.error as Error)?.message}
+            ❌ Error: {(singleMutation.error as Error)?.message || (dualMutation.error as Error)?.message}
           </p>
         </div>
       )}

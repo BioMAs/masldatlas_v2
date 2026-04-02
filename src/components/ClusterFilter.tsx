@@ -17,7 +17,7 @@ export const ClusterFilter: React.FC<ClusterFilterProps> = ({
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Mutation pour appliquer le filtre
+  // Mutation to apply the filter
   const filterMutation = useMutation({
     mutationFn: async (clusters: string[]) => {
       const response = await apiClient.post(

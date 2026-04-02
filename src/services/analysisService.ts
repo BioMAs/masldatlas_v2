@@ -27,7 +27,7 @@ export const analysisService = {
   },
 
   /**
-   * Compute marker genes (Scanpy Rank Genes Groups)
+   * Compute marker genes (Rank Genes Groups)
    */
   async computeMarkers(
     sessionId: string,

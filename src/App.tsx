@@ -59,9 +59,6 @@ function AppContent() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                FastAPI + React
-              </span>
               {sessionId && datasetInfo && (
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                   {datasetInfo.n_cells.toLocaleString()} cells
@@ -237,7 +234,7 @@ function AppContent() {
       <footer className="mt-12 bg-white border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-sm text-gray-600">
-            MASLDatlas v2.0 - Powered by FastAPI, React, and Scanpy
+            MASLDatlas v2.0
           </p>
         </div>
       </footer>

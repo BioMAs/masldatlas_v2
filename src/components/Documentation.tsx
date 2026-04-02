@@ -82,9 +82,8 @@ export function Documentation() {
             </li>
           </ul>
           <p>
-            The backend is powered by <strong>FastAPI</strong> &amp; <strong>Scanpy</strong> for
-            Python-based single-cell analysis, while the frontend is built with{' '}
-            <strong>React + TypeScript</strong> and <strong>Plotly.js</strong> for interactive
+            The backend performs Python-based single-cell analysis, while the frontend is built with{' '}
+            <strong>TypeScript</strong> and <strong>Plotly.js</strong> for interactive
             visualisations.
           </p>
         </div>
